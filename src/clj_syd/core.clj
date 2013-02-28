@@ -20,23 +20,22 @@
           (not= [x y] [s-x s-y])))
    stations))
 
+
 (defn longest-paths
   [n]
-  (loop [paths [{:path [[0 0]]
-                 :remaining-points (conj (generate-stations n) [n n]) }]]
-    (let [paths-with-more-steps (filter (fn [path] (> (count (path :remaining-points)) 0)) paths)]
-      (if (zero? (count paths-with-more-steps))
-        (map :path paths)
-        (recur
-         (mapcat
-          (fn [{:keys [path remaining-points]}]
-            (let [candidates (next-points (last path) remaining-points)]
-              (map
-               (fn [candidate]
-                 {:path (conj path candidate)
-                  :remaining-points (next-points candidate candidates)})
-               candidates)))
-          paths-with-more-steps))))))
+  (map :path (ffirst (drop-while (fn [[_ path]] (not (empty? path)))
+                                 (partition 2 1
+                                            (iterate
+                                             (fn [paths]
+                                               (mapcat
+                                                (fn [{:keys [path remaining-points]}]
+                                                  (let [candidates (next-points (last path) remaining-points)]
+                                                    (map (fn [candidate]
+                                                           {:path (conj path candidate)
+                                                            :remaining-points (next-points candidate candidates)})
+                                                         candidates)))
+                                                paths))
+                                             [{:path [[0 0]] :remaining-points (conj (generate-stations n) [n n]) }]))))))
 
 (defn longest-path-length [n]
   (- (count (first (longest-paths n))) 2))
