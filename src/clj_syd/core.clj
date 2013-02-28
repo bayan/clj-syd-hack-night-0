@@ -20,13 +20,13 @@
           (not= [x y] [s-x s-y])))
    stations))
 
-(defn generate-paths
+(defn longest-paths
   [n]
   (loop [paths [{:path [[0 0]]
                  :remaining-points (conj (generate-stations n) [n n]) }]]
     (let [paths-with-more-steps (filter (fn [path] (> (count (path :remaining-points)) 0)) paths)]
       (if (zero? (count paths-with-more-steps))
-        paths
+        (map :path paths)
         (recur
          (mapcat
           (fn [{:keys [path remaining-points]}]
@@ -39,7 +39,7 @@
           paths-with-more-steps))))))
 
 (defn longest-path-length [n]
-  (- (count (:path (first (generate-paths n)))) 2))
+  (- (count (first (longest-paths n))) 2))
 
 (defn -main
   "Project E*l*r - Problem 411"
