@@ -6,10 +6,16 @@
                       (BigInteger/valueOf i)
                       (BigInteger/valueOf n))))
 
+(defn generate-station
+  [n i]
+  [(mod-pow 2 i n)
+   (mod-pow 3 i n)])
+
 (defn generate-stations
   [n]
-  (let [generator (fn [i] [(mod-pow 2 i n) (mod-pow 3 i n)])]
-    (distinct (map generator (range 0 (inc (* 2 n)))))))
+  (distinct
+   (map (partial generate-station n)
+        (range 0 (inc (* 2 n))))))
 
 (defn next-points
   [[x y] stations]
@@ -19,10 +25,6 @@
           (>= s-y y)
           (not= [x y] [s-x s-y])))
    stations))
-
-(defn new-path
-  [stations remaining]
-  { :stations stations :remaining remaining })
 
 (defn prune [paths]
   (vals
@@ -42,8 +44,8 @@
   [path remaining-points]
   (let [candidates (next-points (last path) remaining-points)]
     (map (fn [candidate]
-           (new-path (conj path candidate)
-                     (next-points candidate candidates)))
+           {:stations (conj path candidate)
+            :remaining (next-points candidate candidates) })
          candidates)))
 
 (defn branch-all-paths
@@ -59,8 +61,8 @@
   (map :stations
        (ffirst (drop-while (fn [[_ path]] (not (empty? path)))
                            (partition 2 1 (iterate branch-all-paths
-                                                   [(new-path [[0 0]]
-                                                              (conj (generate-stations n) [n n]))]))))))
+                                                   [{:stations [[0 0]]
+                                                     :remaining (conj (generate-stations n) [n n])}]))))))
 (defn longest-path-length [n]
   (-> n
       longest-paths
