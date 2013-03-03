@@ -1,7 +1,8 @@
 (ns clj-syd.core
   (:gen-class ))
 
-(defn mod-pow [base i n]
+(defn mod-pow
+  [base i n]
   (.intValue (.modPow (BigInteger/valueOf base)
                       (BigInteger/valueOf i)
                       (BigInteger/valueOf n))))
@@ -26,7 +27,8 @@
           (not= [x y] [s-x s-y])))
    stations))
 
-(defn prune [paths]
+(defn prune
+  [paths]
   (vals
    (reduce
     (fn [longest-paths path]
@@ -63,7 +65,8 @@
                            (partition 2 1 (iterate branch-all-paths
                                                    [{:stations [[0 0]]
                                                      :remaining (conj (generate-stations n) [n n])}]))))))
-(defn longest-path-length [n]
+(defn longest-path-length
+  [n]
   (-> n
       longest-paths
       first
