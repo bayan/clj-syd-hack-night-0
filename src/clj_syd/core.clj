@@ -13,7 +13,7 @@
 
 (defn generate-stations
   [n]
-  (distinct
+  (set
    (map (partial generate-station n)
         (range 0 (inc (* 2 n))))))
 
@@ -45,7 +45,7 @@
   (let [candidates (next-points (last path) remaining-points)]
     (map (fn [candidate]
            {:stations (conj path candidate)
-            :remaining (next-points candidate candidates) })
+            :remaining (next-points candidate candidates)})
          candidates)))
 
 (defn branch-all-paths
