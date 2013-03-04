@@ -18,60 +18,47 @@
    (map (partial generate-station n)
         (range 0 (inc (* 2 n))))))
 
-(defn next-points
-  [[x y] stations]
-  (filter
-   (fn [[s-x s-y]]
-     (and (>= s-x x)
-          (>= s-y y)
-          (not= [x y] [s-x s-y])))
-   stations))
+(defn generate-sorted-stations
+  [n]
+  (sort-by (fn [[x y]] [(min x y) x y])
+           (generate-stations n)))
 
-(defn prune
-  [paths]
-  (vals
+(defn after?
+  [[x1 y1] [x2 y2]]
+  (and
+   (not= [x1 y1] [x2 y2])
+   (>= x2 x1)
+   (>= y2 y1)))
+
+(defn expand-with-station
+  [paths station]
+  (reduce (fn [all [last-station path-length]]
+            (if (after? last-station station)
+              (conj all [station (inc path-length)])
+              all))
+          paths
+          paths))
+
+(defn expand-with-station-and-prune
+  [paths station]
+  (seq
    (reduce
-    (fn [longest-paths path]
-      (let [station (last (path :stations))
-            current-longest (longest-paths station)]
-        (if (and current-longest
-                 (> (count (current-longest :stations))
-                    (count (path :stations))))
-          longest-paths
-          (assoc longest-paths station path))))
+    (fn [all [last-station path-length]]
+      (let [current-max (all last-station)]
+        (if (< path-length (or current-max 0))
+          all
+          (assoc all last-station path-length))))
     {}
-    paths)))
+    (expand-with-station paths station))))
 
-(defn branch-path
-  [path remaining-points]
-  (let [candidates (next-points (last path) remaining-points)]
-    (map (fn [candidate]
-           {:stations (conj path candidate)
-            :remaining (next-points candidate candidates)})
-         candidates)))
 
-(defn branch-all-paths
-  [paths]
-  (prune
-   (mapcat
-    (fn [{:keys [stations remaining]}]
-      (branch-path stations remaining))
-    paths)))
-
-(defn longest-paths
+(defn longest-path-length-for
   [n]
-  (map :stations
-       (ffirst (drop-while (fn [[_ path]] (not (empty? path)))
-                           (partition 2 1 (iterate branch-all-paths
-                                                   [{:stations [[0 0]]
-                                                     :remaining (conj (generate-stations n) [n n])}]))))))
-(defn longest-path-length
-  [n]
-  (-> n
-      longest-paths
-      first
-      count
-      (- 2))) ;; ignore [0 0] and [n n] stations
+  (apply max
+         (map last
+              (reduce expand-with-station-and-prune
+                      [[[0 0] 0]]
+                      (generate-sorted-stations n)))))
 
 (defn -main
   "Project E*l*r - Problem 411"
