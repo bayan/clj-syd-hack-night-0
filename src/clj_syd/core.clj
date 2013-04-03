@@ -42,14 +42,15 @@
 (defn expand-with-station-and-prune
   [paths station]
   (seq
-   (reduce
-    (fn [all [last-station path-length]]
-      (let [current-max (all last-station)]
-        (if (< path-length (or current-max 0))
-          all
-          (assoc all last-station path-length))))
-    {}
-    (expand-with-station paths station))))
+   (persistent!
+    (reduce
+     (fn [all [last-station path-length]]
+       (let [current-max (all last-station)]
+         (if (< path-length (or current-max 0))
+           all
+           (assoc! all last-station path-length))))
+     (transient {})
+     (expand-with-station paths station)))))
 
 
 (defn longest-path-length-for
