@@ -18,11 +18,6 @@
    (map (partial generate-station n)
         (range 0 (inc (* 2 n))))))
 
-(defn generate-sorted-stations
-  [n]
-  (sort-by (fn [[x y]] [(min x y) x y])
-           (generate-stations n)))
-
 (defn after?
   [[x1 y1] [x2 y2]]
   (and
@@ -30,38 +25,35 @@
    (>= x2 x1)
    (>= y2 y1)))
 
-(defn expand-with-station
-  [paths station]
-  (reduce (fn [all [last-station path-length]]
-            (if (after? last-station station)
-              (conj all [station (inc path-length)])
-              all))
-          paths
-          paths))
+(defn before?
+  [[x1 y1] [x2 y2]]
+  (and
+   (not= [x1 y1] [x2 y2])
+   (<= x1 x2)
+   (<= y1 y2)))
 
-(defn expand-with-station-and-prune
-  [paths station]
-  (seq
-   (persistent!
-    (reduce
-     (fn [all [last-station path-length]]
-       (let [current-max (all last-station)]
-         (if (< path-length (or current-max 0))
-           all
-           (assoc! all last-station path-length))))
-     (transient {})
-     (expand-with-station paths station)))))
+(defn stations-with-next-nodes
+  [stations]
+  (let [stations (sort-by (fn [[x y]] [(min x y) x y]) stations)]
+    (loop [[current & remaining] stations
+           mapping (transient {})]
+      (if (nil? current)
+        (persistent! mapping)
+        (recur remaining (assoc! mapping
+                                 current (loop [nexts () [f & r] (filter (partial after? current) remaining)]
+                                           (if (nil? f)
+                                             nexts
+                                             (if (some #(before? % f) nexts)
+                                               (recur nexts r)
+                                               (recur (conj nexts f) r))))))))))
 
-
-(defn longest-path-length-for
+(defn longest-path
   [n]
-  (apply max
-         (map last
-              (reduce expand-with-station-and-prune
-                      [[[0 0] 0]]
-                      (generate-sorted-stations n)))))
-
-(defn -main
-  "Project E*l*r - Problem 411"
-  [& args]
-  (println "Stations: " (generate-stations 22)))
+  (let [stations   (into #{[0 0] [n n]} (generate-stations n))
+        next-nodes (stations-with-next-nodes stations)]
+    (loop [cnt 0
+           positions (next-nodes [0 0])]
+      (if (= positions #{[n n]})
+        cnt
+        (recur (inc cnt)
+               (set (mapcat next-nodes positions)))))))
