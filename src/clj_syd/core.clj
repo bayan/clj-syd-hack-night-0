@@ -55,5 +55,6 @@
            positions (next-nodes [0 0])]
       (if (= positions #{[n n]})
         cnt
-        (recur (inc cnt)
-               (set (mapcat next-nodes positions)))))))
+        (let [next-nodes (distinct (mapcat next-nodes positions))
+              next-nodes (remove (fn [n] (some #(after? % n) next-nodes)) next-nodes)]
+          (recur (inc cnt) (set next-nodes)))))))
